@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"DOIpUpdate"
-	"fmt"
 	"os"
+	"log/syslog"
 )
 
-var doKey = flag.String("doKey", "", "Digital Ocaean API Key");
-var domain = flag.String("domain", "", "Domain for update");
+var doKey = flag.String("doKey", "", "Digital Ocaean API Key")
+var domain = flag.String("domain", "", "Domain for update")
+var logger, _ = syslog.New(syslog.LOG_INFO, "DO IP updater");
 
 func init()  {
 	flag.Parse();
@@ -25,20 +26,22 @@ func main()  {
 	client := DOIpUpdate.GetClientWithToken(*doKey)
 	recordData, err := DOIpUpdate.GetDomainRecord(client, *domain)
 	if (err != nil) {
+		logger.Err(err.Error())
 		panic(err)
 	}
 
 
 	ip := DOIpUpdate.GetIP()
 	if (ip == recordData.DomainRecord.Data) {
-		fmt.Println("IPs are same, do not need update");
-		os.Exit(0);
+		logger.Info("IPs are same, do not need update")
+		os.Exit(0)
 	}
 
-	err = DOIpUpdate.UpdateRecord(client, recordData, ip);
+	err = DOIpUpdate.UpdateRecord(client, recordData, ip)
 	if (err != nil) {
+		logger.Err(err.Error())
 		panic(err)
 	}
 
-	fmt.Println("IP update done to: " + ip);
+	logger.Info("IP update done to: " + ip)
 }
